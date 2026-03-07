@@ -146,6 +146,13 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media') #new8
 
 CORS_ALLOW_ALL_ORIGINS = True #new11
 
+# 🌟 ADD THIS LINE to fix the 403 Forbidden error on /admin
+CSRF_TRUSTED_ORIGINS = [
+    "https://board-backend-8pwu.onrender.com",
+"https://board-eight-tan.vercel.app"
+] #new 18
+
+
 # Allow Django to accept requests up to 100 MB (for massive PDF saves)
 DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600 #new13
 
