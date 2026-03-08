@@ -179,6 +179,8 @@ def start_live_class(request):
             # 👇 THIS WILL PRINT THE EXACT ERROR TO YOUR TERMINAL 👇
             print(f"🔥 ERROR STARTING CLASS: {str(e)}") 
             return JsonResponse({'error': str(e)}, status=500)
+    # 👇 ADD THIS EXACT LINE TO FIX THE CRASH 👇
+    return JsonResponse({'error': 'Invalid method'}, status=405)
 
 @csrf_exempt
 def check_live_class(request):
