@@ -53,7 +53,8 @@ def upload_pdf(request):
             image_path = os.path.join(upload_dir, image_filename)
             pix.save(image_path)
                 
-            file_url = f"http://127.0.0.1:8000{settings.MEDIA_URL}slides/{image_filename}"
+            relative_path = f"{settings.MEDIA_URL}slides/{image_filename}"
+            file_url = request.build_absolute_uri(relative_path)
             image_urls.append(file_url)
         
         doc.close()
