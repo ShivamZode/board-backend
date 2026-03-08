@@ -1,4 +1,6 @@
 import os
+import time  # 🌟 NEW
+import glob  # 🌟 NEW
 import fitz  # This is PyMuPDF
 import uuid # Import the UUID library
 from django.conf import settings
@@ -21,6 +23,19 @@ def upload_pdf(request):
 
         upload_dir = os.path.join(settings.MEDIA_ROOT, 'slides')
         os.makedirs(upload_dir, exist_ok=True)
+
+        # 👇 NEW: THE AUTO-JANITOR 👇
+        # Delete any slide images older than 2 hours to prevent disk full errors
+        current_time = time.time()
+        for filepath in glob.glob(os.path.join(upload_dir, '*')):
+            if os.path.isfile(filepath):
+                # If the file is older than 7200 seconds (2 hours)
+                if os.stat(filepath).st_mtime < current_time - 7200:
+                    try:
+                        os.remove(filepath)
+                    except Exception:
+                        pass # Ignore files we can't delete right now
+        # 👆 END OF JANITOR 👆
         
         pdf_path = os.path.join(upload_dir, pdf_file.name)
         with open(pdf_path, 'wb+') as f:
