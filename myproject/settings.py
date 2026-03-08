@@ -166,6 +166,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media') #new8
 
 CORS_ALLOW_ALL_ORIGINS = True #new11
 
+# Tell Django to trust the secure HTTPS connection from Render
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # 🌟 ADD THIS LINE to fix the 403 Forbidden error on /admin
 CSRF_TRUSTED_ORIGINS = [
     "https://board-backend-8pwu.onrender.com",
