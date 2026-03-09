@@ -10,6 +10,7 @@ import json
 from django.contrib.auth import authenticate, login
 from .models import CustomUser, StudentProfile, TeacherProfile, College, Branch, AcademicYear, Division, Subject, LiveClass, Attendance
 from django.utils import timezone
+from django.utils.timezone import localtime
 import traceback
 
 @csrf_exempt
@@ -277,8 +278,8 @@ def get_previous_classes(request):
 
             history = []
             for c in classes:
-                start_str = c.created_at.strftime("%b %d, %Y - %I:%M %p") if c.created_at else "Unknown"
-                end_str = c.ended_at.strftime("%I:%M %p") if c.ended_at else "Unknown"
+                start_str = localtime(c.created_at).strftime("%b %d, %Y - %I:%M %p") if c.created_at else "Unknown"
+                end_str = localtime(c.ended_at).strftime("%I:%M %p") if c.ended_at else "Unknown"
                 
                 # Safely grab the text data just in case something is blank
                 branch_name = c.branch.name if c.branch else "Unknown"
@@ -511,7 +512,7 @@ def get_student_attendance_stats(request):
                 sessions.append({
                     'subject': cls.subject_name,
                     'teacher': cls.teacher_name,
-                    'date': cls.created_at.strftime("%b %d, %Y"),
+                    'date': localtime(cls.created_at).strftime("%b %d, %Y"),
                     'status': status,
                     'percentage': percentage
                 })
