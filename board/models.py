@@ -71,7 +71,6 @@ class StudentProfile(models.Model):
     college = models.ForeignKey(College, on_delete=models.SET_NULL, null=True)
     branch = models.ForeignKey(Branch, on_delete=models.SET_NULL, null=True)
     
-    # NEW: Pinpoints exactly where the student belongs for targeted notifications
     academic_year = models.ForeignKey(AcademicYear, on_delete=models.SET_NULL, null=True)
     division = models.ForeignKey(Division, on_delete=models.SET_NULL, null=True) 
     
@@ -85,14 +84,15 @@ class TeacherProfile(models.Model):
     full_name = models.CharField(max_length=255)
     college = models.ForeignKey(College, on_delete=models.SET_NULL, null=True)
     
-    # NEW: A teacher can teach multiple subjects, and a subject can have multiple teachers
     subjects = models.ManyToManyField(Subject, related_name='teachers', blank=True)
     
     def __str__(self): return self.full_name
 
 class LiveClass(models.Model):
+    # Unique=True automatically acts as an index!
     room_id = models.CharField(max_length=100, unique=True)
-    # 👇 Indexed for fast filtering by teacher
+    
+    # 👇 INDEXED: Teacher Dashboard filters heavily by this
     teacher_name = models.CharField(max_length=255, db_index=True) 
     subject_name = models.CharField(max_length=255)
     
@@ -102,12 +102,19 @@ class LiveClass(models.Model):
     
     notify_type = models.CharField(max_length=20, default='direct')
 
-    # 👇 Indexed because you constantly filter for active/inactive classes
+    # 👇 INDEXED: Heavily used to separate Live vs Past classes
     is_active = models.BooleanField(default=True, db_index=True) 
     created_at = models.DateTimeField(auto_now_add=True)
     ended_at = models.DateTimeField(null=True, blank=True)
 
     board_data = models.TextField(blank=True, null=True)
+
+    class Meta:
+        # 👇 COMPOUND INDEX: Matches the exact payload from StudentDashboard.js!
+        # This makes polling for live classes and fetching past history instant.
+        indexes = [
+            models.Index(fields=['branch', 'academic_year', 'division', 'is_active']),
+        ]
 
     def __str__(self):
         return f"{self.subject_name} by {self.teacher_name} ({'Live' if self.is_active else 'Ended'})"
@@ -115,14 +122,22 @@ class LiveClass(models.Model):
 class Attendance(models.Model):
     live_class = models.ForeignKey(LiveClass, on_delete=models.CASCADE, related_name='attendances')
     student_name = models.CharField(max_length=255)
-    # 👇 Indexed so fetching a student's history is instant
+    
+    # 👇 INDEXED: Student Dashboard Stats filters heavily by this
     student_email = models.CharField(max_length=255, db_index=True) 
     
     total_seconds = models.IntegerField(default=0)
     last_joined_at = models.DateTimeField(null=True, blank=True)
     
-    # 👇 Indexed so you can quickly count who is currently live in the room
-    is_active = models.BooleanField(default=False, db_index=True) 
+    # 👇 INDEXED: Used by the teacher's Live Roster check
+    is_active = models.BooleanField(default=False, db_index=True)
+
+    class Meta:
+        # 👇 COMPOUND INDEX: Makes the Teacher's "Live Roster" background ping instant
+        # by instantly grabbing only active students for a specific class
+        indexes = [
+            models.Index(fields=['live_class', 'is_active']),
+        ]
 
     def __str__(self):
         return f"{self.student_name} - {self.live_class.subject_name}"
