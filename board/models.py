@@ -92,19 +92,19 @@ class TeacherProfile(models.Model):
 
 class LiveClass(models.Model):
     room_id = models.CharField(max_length=100, unique=True)
-    teacher_name = models.CharField(max_length=255)
+    # 👇 Indexed for fast filtering by teacher
+    teacher_name = models.CharField(max_length=255, db_index=True) 
     subject_name = models.CharField(max_length=255)
     
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
     academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE)
     division = models.ForeignKey(Division, on_delete=models.CASCADE)
     
-    # 👇 NEW: How should students be notified?
     notify_type = models.CharField(max_length=20, default='direct')
 
-    is_active = models.BooleanField(default=True)
+    # 👇 Indexed because you constantly filter for active/inactive classes
+    is_active = models.BooleanField(default=True, db_index=True) 
     created_at = models.DateTimeField(auto_now_add=True)
-
     ended_at = models.DateTimeField(null=True, blank=True)
 
     board_data = models.TextField(blank=True, null=True)
@@ -115,12 +115,14 @@ class LiveClass(models.Model):
 class Attendance(models.Model):
     live_class = models.ForeignKey(LiveClass, on_delete=models.CASCADE, related_name='attendances')
     student_name = models.CharField(max_length=255)
-    student_email = models.CharField(max_length=255)
+    # 👇 Indexed so fetching a student's history is instant
+    student_email = models.CharField(max_length=255, db_index=True) 
     
-    # Tracking the time
     total_seconds = models.IntegerField(default=0)
     last_joined_at = models.DateTimeField(null=True, blank=True)
-    is_active = models.BooleanField(default=False)
+    
+    # 👇 Indexed so you can quickly count who is currently live in the room
+    is_active = models.BooleanField(default=False, db_index=True) 
 
     def __str__(self):
         return f"{self.student_name} - {self.live_class.subject_name}"
